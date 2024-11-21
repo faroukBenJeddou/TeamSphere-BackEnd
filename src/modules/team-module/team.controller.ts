@@ -1,4 +1,3 @@
-
 /*
 https://docs.nestjs.com/controllers#controllers
 */
@@ -12,37 +11,36 @@ import {
   InternalServerErrorException,
   Param,
   Patch,
-  Post
-} from "@nestjs/common";
+  Post,
+} from '@nestjs/common';
 
-import { TeamService } from "./team.service";
-import { CreateTeamDto } from "./dto/createTeam.dto";
-import { UpdateTeamDto } from "./dto/updateTeam.dto";
-import { AssignTaskDto } from "./dto/assignTask.dto";
-import {TeamCategoryEnum} from "../../schemas/enums/team.category.enum";
-import {User} from "../../schemas/user.schema";
-import {UserRoles} from "../../schemas/enums/user.roles";
-import {SendChatMessageDto} from "./dto/SendChatMessage.dto";
-import {ChatMessage} from "../../schemas/ChatMessage.schema";
-import {TeamWebSocketGateway} from "./team.websocket.gateway";
+import { TeamService } from './team.service';
+import { CreateTeamDto } from './dto/createTeam.dto';
+import { UpdateTeamDto } from './dto/updateTeam.dto';
+import { AssignTaskDto } from './dto/assignTask.dto';
+import { TeamCategoryEnum } from '../../schemas/enums/team.category.enum';
+import { User } from '../../schemas/user.schema';
+import { UserRoles } from '../../schemas/enums/user.roles';
+import { SendChatMessageDto } from './dto/SendChatMessage.dto';
+import { ChatMessage } from '../../schemas/ChatMessage.schema';
+import { TeamWebSocketGateway } from './team.websocket.gateway';
 import any = jasmine.any;
-import {Types} from "mongoose";
-import {Team} from "../../schemas/team.schema";
+import { Types } from 'mongoose';
+import { Team } from '../../schemas/team.schema';
 
 @Controller('team')
 export class TeamController {
-
   constructor(
-      private readonly teamService: TeamService,
-      private readonly teamWebSocketGateway: TeamWebSocketGateway, // Inject WebSocket gateway or service
+    private readonly teamService: TeamService,
+    private readonly teamWebSocketGateway: TeamWebSocketGateway, // Inject WebSocket gateway or service
   ) {}
   @Get('all/:teamId/:role')
   async getUsersNotInTeam(
-      @Param('teamId') teamId: string,
-      @Param('role') role: string,
+    @Param('teamId') teamId: string,
+    @Param('role') role: string,
   ): Promise<User[]> {
     try {
-      const users = await this.teamService.getUsersNotInTeam(teamId,  role);
+      const users = await this.teamService.getUsersNotInTeam(teamId, role);
       return users;
     } catch (error) {
       throw new Error(`Error fetching users: ${error.message}`);
@@ -70,7 +68,10 @@ export class TeamController {
   }
 
   @Patch(':id')
-  async updateTeam(@Param('id') id: string, @Body() updateTeamDto: UpdateTeamDto) {
+  async updateTeam(
+    @Param('id') id: string,
+    @Body() updateTeamDto: UpdateTeamDto,
+  ) {
     const updatedTeam = await this.teamService.updateTeam(id, updateTeamDto);
     if (!updatedTeam) throw new HttpException('Team not found', 404);
     return updatedTeam;
@@ -83,20 +84,32 @@ export class TeamController {
     return deletedTeam;
   }
   @Post(':teamId/members/:userId')
-  async addMemberToTeam(@Param('teamId') teamId: string, @Param('userId') userId: string) {
+  async addMemberToTeam(
+    @Param('teamId') teamId: string,
+    @Param('userId') userId: string,
+  ) {
     const updatedTeam = await this.teamService.addMemberToTeam(teamId, userId);
     if (!updatedTeam) throw new HttpException('Team not found', 404);
     return updatedTeam;
   }
   @Post(':teamId/affectprojectteam/:projectId')
-  async affectteamtoproject(@Param('teamId') teamId: string, @Param('projectId') projectId: string) {
-    const updatedTeam = await this.teamService.affectteamtoproject(teamId, projectId);
+  async affectteamtoproject(
+    @Param('teamId') teamId: string,
+    @Param('projectId') projectId: string,
+  ) {
+    const updatedTeam = await this.teamService.affectteamtoproject(
+      teamId,
+      projectId,
+    );
     if (!updatedTeam) throw new HttpException('Team not found', 404);
     return updatedTeam;
-  } 
+  }
   @Patch(':taskId/affecttask/:userId')
-  async assignTaskToMember(@Param('taskId') taskId: string, @Param('userId') userId: string): Promise<void> {
-     await this.teamService.assignTaskToMember(taskId, userId);
+  async assignTaskToMember(
+    @Param('taskId') taskId: string,
+    @Param('userId') userId: string,
+  ): Promise<void> {
+    await this.teamService.assignTaskToMember(taskId, userId);
   }
   @Get(':projectId/users')
   async getUsersInProject(@Param('projectId') projectId: string) {
@@ -114,25 +127,30 @@ export class TeamController {
   ) {
     try {
       await this.teamService.removeUserFromTeam(teamId, userId);
-      return { success: true, message: 'User removed from the team successfully' };
+      return {
+        success: true,
+        message: 'User removed from the team successfully',
+      };
     } catch (error) {
       return { success: false, message: error.message };
     }
   }
 
   @Post(':teamId/members2/:userId')
-  async addMemberToTeam2(@Param('teamId') teamId: string, @Param('userId') userId: string) {
-     await this.teamService.addMemberToTeam2(teamId, userId);
-
+  async addMemberToTeam2(
+    @Param('teamId') teamId: string,
+    @Param('userId') userId: string,
+  ) {
+    await this.teamService.addMemberToTeam2(teamId, userId);
   }
   @Get('notif/:userId')
   async displayNotifications(@Param('userId') userId: string) {
-   return   await this.teamService.displayNotifications(userId);
+    return await this.teamService.displayNotifications(userId);
   }
   @Post('/accept-invitation/:userId/:notificationId')
   async acceptTeamInvitation(
-      @Param('userId') userId: string,
-      @Param('notificationId') notificationId: string
+    @Param('userId') userId: string,
+    @Param('notificationId') notificationId: string,
   ) {
     try {
       await this.teamService.acceptTeamInvitation(userId, notificationId);
@@ -141,10 +159,8 @@ export class TeamController {
       throw new InternalServerErrorException(error.message);
     }
   }
- @Post('/reject-invitation/:notificationId')
-  async rejectinvite(
-       @Param('notificationId') notificationId: string
-  ) {
+  @Post('/reject-invitation/:notificationId')
+  async rejectinvite(@Param('notificationId') notificationId: string) {
     try {
       await this.teamService.rejectTeamInvitation(notificationId);
       return { message: 'Team invitation rejected' };
@@ -154,19 +170,24 @@ export class TeamController {
   }
   @Post(':teamId/chat/send')
   async sendChatMessage(
-      @Param('teamId') teamId: string,
-      @Body() sendChatMessageDto: SendChatMessageDto,
+    @Param('teamId') teamId: string,
+    @Body() sendChatMessageDto: SendChatMessageDto,
   ): Promise<void> {
     const { senderId, content } = sendChatMessageDto;
     await this.teamService.sendChatMessage(teamId, senderId, content);
-    const chatMessage: { sender: User; content: string; timestamp: Date } = { sender: senderId, content, timestamp: new Date() };
+    const chatMessage: { sender: User; content: string; timestamp: Date } = {
+      sender: senderId,
+      content,
+      timestamp: new Date(),
+    };
 
-     this.teamWebSocketGateway.sendChatMessageToClients(chatMessage);
-
+    this.teamWebSocketGateway.sendChatMessageToClients(chatMessage);
   }
 
   @Get(':teamId/chat')
-  async getChatMessages(@Param('teamId') teamId: string): Promise<ChatMessage[]> {
+  async getChatMessages(
+    @Param('teamId') teamId: string,
+  ): Promise<ChatMessage[]> {
     return this.teamService.getChatMessages(teamId);
   }
   @Get('user/:userId/teams')

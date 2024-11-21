@@ -5,15 +5,12 @@ import { TeamModule } from './modules/team-module/team.module';
 import { TaskModule } from './modules/task/task.module';
 import { ProjectModule } from './modules/project/project.module';
 import { MongooseModule } from '@nestjs/mongoose';
-import {StatusModule} from "./modules/status/status.module";
+import { StatusModule } from './modules/status/status.module';
 import { sprintModule } from './modules/sprint/sprint.module';
 
-import {NotificationModule} from "./modules/notification/notification.module";
+import { NotificationModule } from './modules/notification/notification.module';
 
-import { MulterModule } from "@nestjs/platform-express";
-
-
-
+import { MulterModule } from '@nestjs/platform-express';
 
 @Module({
   imports: [
@@ -29,8 +26,8 @@ import { MulterModule } from "@nestjs/platform-express";
     ProjectModule,
     sprintModule,
     NotificationModule,
-    ],
+  ],
   controllers: [],
   providers: [],
 })
-export class AppModule { }
+export class AppModule {}

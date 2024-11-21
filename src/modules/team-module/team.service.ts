@@ -2,55 +2,50 @@
 https://docs.nestjs.com/providers#services
 */
 
-import {Injectable, NotFoundException} from '@nestjs/common';
-import {InjectModel} from '@nestjs/mongoose';
-import {Model} from 'mongoose';
-import {BaseService} from 'src/global-utils/base.service';
-import { Team} from 'src/schemas/team.schema';
-import {CreateTeamDto} from "./dto/createTeam.dto";
-import {UpdateTeamDto} from "./dto/updateTeam.dto";
-import {User} from "../../schemas/user.schema";
-import {Project} from "../../schemas/project.schema";
-import {Task} from 'src/schemas/task.schema';
-import {NotificationService} from "../notification/notification.service";
-import {Notification} from "../../schemas/notification.schema";
-import {ChatMessage} from "../../schemas/ChatMessage.schema";
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { InjectModel } from '@nestjs/mongoose';
+import { Model } from 'mongoose';
+import { BaseService } from 'src/global-utils/base.service';
+import { Team } from 'src/schemas/team.schema';
+import { CreateTeamDto } from './dto/createTeam.dto';
+import { UpdateTeamDto } from './dto/updateTeam.dto';
+import { User } from '../../schemas/user.schema';
+import { Project } from '../../schemas/project.schema';
+import { Task } from 'src/schemas/task.schema';
+import { NotificationService } from '../notification/notification.service';
+import { Notification } from '../../schemas/notification.schema';
+import { ChatMessage } from '../../schemas/ChatMessage.schema';
 
 @Injectable()
 export class TeamService extends BaseService<Team> {
+  constructor(
+    @InjectModel(Team.name) private TeamModel: Model<Team>,
+    @InjectModel(ChatMessage.name)
+    private readonly chatMessageModel: Model<ChatMessage>,
+    @InjectModel(User.name) private UserModel: Model<User>,
+    @InjectModel(Notification.name)
+    private notificationModel: Model<Notification>,
+    @InjectModel(Project.name) private ProjectModel: Model<Project>,
+    @InjectModel(Task.name) private readonly taskModel: Model<Task>,
+    private readonly notificationService: NotificationService,
+  ) {
+    super(TeamModel);
+  }
+  async createTeam(createTaskDto: CreateTeamDto) {
+    return super.create(createTaskDto);
+  }
 
+  getAllTeams() {
+    return super.findAll();
+  }
 
+  getOneTeam(id: string) {
+    return super.findOne(id);
+  }
 
-
-    constructor(
-
-        @InjectModel(Team.name) private TeamModel: Model<Team>,
-        @InjectModel(ChatMessage.name) private readonly chatMessageModel: Model<ChatMessage>,
-        @InjectModel(User.name) private UserModel: Model<User>,
-        @InjectModel(Notification.name) private notificationModel: Model<Notification>,
-        @InjectModel(Project.name) private ProjectModel: Model<Project>,
-        @InjectModel(Task.name) private readonly taskModel: Model<Task>,
-        private readonly notificationService: NotificationService,
-
-    ) {
-        super(TeamModel);
-    }
-    async createTeam(createTaskDto: CreateTeamDto) {
-        return super.create(createTaskDto)
-    }
-
-    getAllTeams() {
-        return super.findAll();
-
-     }
-
-     getOneTeam(id: string) {
-         return super.findOne(id);
-     }
- 
-     updateTeam(id: string, updateTeamDto: UpdateTeamDto) {
-         return super.update(id,updateTeamDto);
-     }
+  updateTeam(id: string, updateTeamDto: UpdateTeamDto) {
+    return super.update(id, updateTeamDto);
+  }
 
   async deleteTeam(id: string) {
     try {
@@ -61,13 +56,17 @@ export class TeamService extends BaseService<Team> {
       }
 
       // Find all users belonging to the team
-      const users = await this.UserModel.find({ 'teams': id });
+      const users = await this.UserModel.find({ teams: id });
       if (users.length > 0) {
         // Remove the team reference from each user
-        await Promise.all(users.map(async (user) => {
-          user.teams = user.teams.filter(teamId => teamId.toString() !== id);
-          await user.save();
-        }));
+        await Promise.all(
+          users.map(async (user) => {
+            user.teams = user.teams.filter(
+              (teamId) => teamId.toString() !== id,
+            );
+            await user.save();
+          }),
+        );
       }
 
       // Delete the team
@@ -110,7 +109,6 @@ export class TeamService extends BaseService<Team> {
     }
   }
 
-
   async affectteamtoproject(teamId: string, projectId: string) {
     try {
       const team = await this.TeamModel.findById(teamId);
@@ -118,9 +116,10 @@ export class TeamService extends BaseService<Team> {
         throw new NotFoundException('Team not found');
       }
 
-
       // Check if the user already exists in the team
-      if (team.project.map(project => project.toString()).includes(projectId)) {
+      if (
+        team.project.map((project) => project.toString()).includes(projectId)
+      ) {
         return team;
       }
       const project = await this.ProjectModel.findById(projectId).exec();
@@ -144,7 +143,9 @@ export class TeamService extends BaseService<Team> {
       throw new NotFoundException('User not found');
     }
 
-    const task = await this.taskModel.findByIdAndUpdate(taskId, { assignedTo: user }).exec();
+    const task = await this.taskModel
+      .findByIdAndUpdate(taskId, { assignedTo: user })
+      .exec();
     if (!task) {
       throw new NotFoundException('Task not found');
     }
@@ -154,12 +155,12 @@ export class TeamService extends BaseService<Team> {
   async getUsersInProject(projectId: string): Promise<User[]> {
     const teams = await this.TeamModel.find({ project: projectId }).exec();
 
-    console.log("Teams:", teams); // Log teams to check if all teams associated with the project are retrieved
+    console.log('Teams:', teams); // Log teams to check if all teams associated with the project are retrieved
 
     // Extract user IDs from all teams
-    const userIds = teams.flatMap(team => team.users.map(user => user));
+    const userIds = teams.flatMap((team) => team.users.map((user) => user));
 
-    console.log("User IDs:", userIds); // Log user IDs to ensure you're getting users from all teams
+    console.log('User IDs:', userIds); // Log user IDs to ensure you're getting users from all teams
 
     // Step 2: Query users with the IDs obtained
     const users = await this.UserModel.find({ _id: { $in: userIds } }).exec();
@@ -181,10 +182,14 @@ export class TeamService extends BaseService<Team> {
       }
 
       // Remove the team from all teams the user belongs to
-      user.teams = user.teams.filter(userTeamId => userTeamId.toString() !== teamId);
+      user.teams = user.teams.filter(
+        (userTeamId) => userTeamId.toString() !== teamId,
+      );
 
       // Remove the user from all teams they are a member of
-      team.users = team.users.filter(teamUserId => teamUserId.toString() !== userId);
+      team.users = team.users.filter(
+        (teamUserId) => teamUserId.toString() !== userId,
+      );
 
       // Save the updated user and team documents
       await user.save();
@@ -205,26 +210,28 @@ export class TeamService extends BaseService<Team> {
       }
 
       // Find notifications for the team
-      const notifications = await this.notificationModel.find({ pending: teamId }).exec();
-      const userIds = notifications.map(notification => notification.user);
+      const notifications = await this.notificationModel
+        .find({ pending: teamId })
+        .exec();
+      const userIds = notifications.map((notification) => notification.user);
 
       // Find users who are not in the team and have the specified role
       const users = await this.UserModel.find({
         teams: { $ne: teamId },
-        _id: { $nin: userIds } // Exclude users with pending notifications for the specified team
-      }).populate('role').exec();
+        _id: { $nin: userIds }, // Exclude users with pending notifications for the specified team
+      })
+        .populate('role')
+        .exec();
 
       // Filter users based on the specified role and number of teams
-      return users.filter(user =>
-           user.role.role === roleName && (!user.teams || user.teams.length < 3)
-       );
+      return users.filter(
+        (user) =>
+          user.role.role === roleName && (!user.teams || user.teams.length < 3),
+      );
     } catch (error) {
       throw new Error(`Error fetching users: ${error.message}`);
     }
   }
-
-
-
 
   async addMemberToTeam2(teamId: string, userId: string) {
     try {
@@ -244,8 +251,10 @@ export class TeamService extends BaseService<Team> {
       user.teams = user.teams || [];
 
       // Send a notification to the user
-      await this.notificationService.sendTeamInvitationNotification(team, userId); // Pass the team and user ID
-
+      await this.notificationService.sendTeamInvitationNotification(
+        team,
+        userId,
+      ); // Pass the team and user ID
     } catch (error) {
       throw new Error(error.message);
     }
@@ -254,8 +263,10 @@ export class TeamService extends BaseService<Team> {
   async displayNotifications(userId: string): Promise<Notification[]> {
     try {
       // Find the user by ID and populate the 'notifications' field
-      const user = await this.UserModel.findById(userId).populate('notifications').exec();
-       if (!user) {
+      const user = await this.UserModel.findById(userId)
+        .populate('notifications')
+        .exec();
+      if (!user) {
         throw new NotFoundException('User not found');
       }
 
@@ -265,7 +276,10 @@ export class TeamService extends BaseService<Team> {
       throw new Error(`Error fetching notifications: ${error.message}`);
     }
   }
-  async acceptTeamInvitation(userId: string, notificationId: string): Promise<void> {
+  async acceptTeamInvitation(
+    userId: string,
+    notificationId: string,
+  ): Promise<void> {
     try {
       // Find the user by ID
       const user = await this.UserModel.findById(userId);
@@ -274,7 +288,8 @@ export class TeamService extends BaseService<Team> {
       }
 
       // Find the notification by ID
-      const notification = await this.notificationModel.findById(notificationId);
+      const notification =
+        await this.notificationModel.findById(notificationId);
       if (!notification) {
         throw new NotFoundException('Notification not found');
       }
@@ -290,7 +305,9 @@ export class TeamService extends BaseService<Team> {
       }
 
       // Remove the notification from the user's pending notifications
-      user.notifications = user.notifications.filter(notif => notif.toString() !== notificationId);
+      user.notifications = user.notifications.filter(
+        (notif) => notif.toString() !== notificationId,
+      );
       await user.save();
 
       // Add the user to the team
@@ -306,7 +323,8 @@ export class TeamService extends BaseService<Team> {
     try {
       // Find the user by ID
       // Find the notification by ID
-      const notification = await this.notificationModel.findById(notificationId);
+      const notification =
+        await this.notificationModel.findById(notificationId);
       if (!notification) {
         throw new NotFoundException('Notification not found');
       }
@@ -318,7 +336,11 @@ export class TeamService extends BaseService<Team> {
     }
   }
 
-  async sendChatMessage(teamId: string, senderId: User, content: string): Promise<void> {
+  async sendChatMessage(
+    teamId: string,
+    senderId: User,
+    content: string,
+  ): Promise<void> {
     try {
       // Find the team by ID
       const team = await this.TeamModel.findById(teamId);
@@ -327,23 +349,26 @@ export class TeamService extends BaseService<Team> {
       }
 
       // Create a new chat message
-      const newMessage = new this.chatMessageModel({ sender: senderId, content:content });
+      const newMessage = new this.chatMessageModel({
+        sender: senderId,
+        content: content,
+      });
 
       // Add the new message to the team's chat
-      team.chat.push(newMessage) ;
-     await newMessage.save();
+      team.chat.push(newMessage);
+      await newMessage.save();
       // Save the updated team document
       await team.save();
     } catch (error) {
       throw new Error(`Error sending chat message: ${error.message}`);
     }
-
-
   }
   async getChatMessages(teamId: string): Promise<ChatMessage[]> {
     try {
       // Find the team by ID and populate the chat messages
-      const team = await this.TeamModel.findById(teamId).populate('chat').exec();
+      const team = await this.TeamModel.findById(teamId)
+        .populate('chat')
+        .exec();
       if (!team) {
         throw new Error('Team not found');
       }
@@ -360,7 +385,9 @@ export class TeamService extends BaseService<Team> {
   async getTeamsForUser(userId: string): Promise<Team[]> {
     try {
       // Find the user by ID and populate the 'teams' field
-      const user = await this.UserModel.findById(userId).populate('teams').exec();
+      const user = await this.UserModel.findById(userId)
+        .populate('teams')
+        .exec();
       if (!user) {
         throw new NotFoundException('User not found');
       }
@@ -373,7 +400,4 @@ export class TeamService extends BaseService<Team> {
       throw new Error(`Error fetching teams for user: ${error.message}`);
     }
   }
-
-
-
 }

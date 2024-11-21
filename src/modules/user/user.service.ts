@@ -2,7 +2,12 @@
 https://docs.nestjs.com/providers#services
 */
 
-import { HttpException, HttpStatus, Injectable, NotFoundException } from "@nestjs/common";
+import {
+  HttpException,
+  HttpStatus,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { BaseService } from 'src/global-utils/base.service';
@@ -12,19 +17,19 @@ import * as bcrypt from 'bcrypt';
 import { UpdateUserDto } from './dto/updateUserDto';
 import { UserSettings } from 'src/schemas/userSettings.schema';
 import { Role } from 'src/schemas/roles.schema';
-import { EmailService } from "./mail.service";
+import { EmailService } from './mail.service';
 import * as fs from 'fs';
-import { UserRoles } from "src/schemas/enums/user.roles";
-import { ChangeRoleDto } from "./dto/changeRole.dto";
+import { UserRoles } from 'src/schemas/enums/user.roles';
+import { ChangeRoleDto } from './dto/changeRole.dto';
 
 @Injectable()
-export class UserService extends BaseService<User>{
+export class UserService extends BaseService<User> {
   constructor(
     @InjectModel(User.name) private userModel: Model<User>,
-    @InjectModel(UserSettings.name) private userSettingsModel: Model<UserSettings>,
+    @InjectModel(UserSettings.name)
+    private userSettingsModel: Model<UserSettings>,
     @InjectModel(Role.name) private roleModel: Model<Role>,
     private readonly emailService: EmailService,
-
   ) {
     super(userModel);
   }
@@ -33,7 +38,7 @@ export class UserService extends BaseService<User>{
     const user = await super.findOneForSave(id, ['settings', 'role', 'teams']);
     const userSettings = user.settings;
     // Check if there's an existing photo associated with the user
-    if (user.photo && user.photo !== "user.png") {
+    if (user.photo && user.photo !== 'user.png') {
       // Remove the previous photo from the storage
       const previousPhotoPath = `./uploads/${user.photo}`;
       try {
@@ -54,25 +59,25 @@ export class UserService extends BaseService<User>{
     return super.findAll();
   }
 
-
-
   async getUsersWithEtat(etat: number) {
     try {
       console.log(etat);
       const users = await this.userModel.find().populate('settings role');
       // Filter users based on the statusAccount field in the populated settings
-      const filteredUsers = users.filter(user => user.settings.statusAccount == etat);
+      const filteredUsers = users.filter(
+        (user) => user.settings.statusAccount == etat,
+      );
       if (filteredUsers.length > 0) {
         return {
-          message: "success",
+          message: 'success',
           data: filteredUsers,
-          status: 200
+          status: 200,
         };
       } else {
         return {
-          message: "no users found",
+          message: 'no users found',
           data: [],
-          status: 404
+          status: 404,
         };
       }
     } catch (err) {
@@ -84,25 +89,26 @@ export class UserService extends BaseService<User>{
     try {
       const users = await this.userModel.find().populate('settings role');
       // Filter users based on the statusAccount field in the populated settings
-      const filteredUsers = users.filter(user => user.settings.blocked == true);
+      const filteredUsers = users.filter(
+        (user) => user.settings.blocked == true,
+      );
       if (filteredUsers.length > 0) {
         return {
-          message: "success",
+          message: 'success',
           data: filteredUsers,
-          status: 200
+          status: 200,
         };
       } else {
         return {
-          message: "no users found",
+          message: 'no users found',
           data: [],
-          status: 404
+          status: 404,
         };
       }
     } catch (err) {
       throw new HttpException(err, HttpStatus.BAD_REQUEST);
     }
   }
-
 
   async getOneUser(id: string) {
     const user = await super.findOne(id, ['settings', 'role', 'teams']);
@@ -113,12 +119,9 @@ export class UserService extends BaseService<User>{
     return {
       message: 'success',
       data: result,
-      status: 200
+      status: 200,
     };
-
-
   }
-
 
   updateUser(id: string, updateUserDto: UpdateUserDto) {
     return super.update(id, updateUserDto);
@@ -126,15 +129,17 @@ export class UserService extends BaseService<User>{
 
   async acceptUser(id: string) {
     try {
-      const user = await super.findOneForSave(id, ['settings', 'role', 'teams']);
+      const user = await super.findOneForSave(id, [
+        'settings',
+        'role',
+        'teams',
+      ]);
       const userSettings = user.settings;
-
 
       userSettings.statusAccount = 1;
       userSettings.verifiedAccount = true;
       await userSettings.save();
       return await user.save();
-
     } catch (error) {
       // Handle any errors
       console.error('Error accepting user:', error);
@@ -142,15 +147,18 @@ export class UserService extends BaseService<User>{
     }
   }
 
-    async blockUser(id: string) {
+  async blockUser(id: string) {
     try {
-      const user = await super.findOneForSave(id, ['settings', 'role', 'teams']);
+      const user = await super.findOneForSave(id, [
+        'settings',
+        'role',
+        'teams',
+      ]);
       const userSettings = user.settings;
 
       userSettings.blocked = true;
       await userSettings.save();
       return await user.save();
-
     } catch (error) {
       // Handle any errors
       console.error('Error blocking user:', error);
@@ -161,16 +169,20 @@ export class UserService extends BaseService<User>{
   async setRole(id: string, roleDto: ChangeRoleDto) {
     try {
       console.log(roleDto.role);
-      const user = await super.findOneForSave(id, ['settings', 'role', 'teams']);
-      const roleDocument = await this.roleModel.findOne({role:roleDto.role}).exec();
+      const user = await super.findOneForSave(id, [
+        'settings',
+        'role',
+        'teams',
+      ]);
+      const roleDocument = await this.roleModel
+        .findOne({ role: roleDto.role })
+        .exec();
       if (!roleDocument) {
         throw new NotFoundException('no role like that');
       }
 
-
       user.role = roleDocument;
       return await user.save();
-
     } catch (error) {
       // Handle any errors
       console.error('Error accepting user:', error);
@@ -178,18 +190,19 @@ export class UserService extends BaseService<User>{
     }
   }
 
-
   async declinetUser(id: string) {
     try {
-      const user = await super.findOneForSave(id, ['settings', 'role', 'teams']);
+      const user = await super.findOneForSave(id, [
+        'settings',
+        'role',
+        'teams',
+      ]);
       const userSettings = user.settings;
-
 
       userSettings.statusAccount = -1;
       userSettings.verifiedAccount = false;
       await userSettings.save();
       return await user.save();
-
     } catch (error) {
       // Handle any errors
       console.error('Error declining user:', error);
@@ -214,7 +227,11 @@ export class UserService extends BaseService<User>{
       }
 
       // Update user document
-      const updatedUser = await this.userModel.findOneAndUpdate({ _id: userId }, data, { new: true, runValidators: true });
+      const updatedUser = await this.userModel.findOneAndUpdate(
+        { _id: userId },
+        data,
+        { new: true, runValidators: true },
+      );
 
       // Return success response with updated user data
       return {
@@ -226,17 +243,23 @@ export class UserService extends BaseService<User>{
     } catch (error) {
       // If NotFoundException is caught, return the error response with status 404
       if (error instanceof NotFoundException) {
-        throw new HttpException({
-          status: 'error',
-          message: error.message,
-        }, HttpStatus.NOT_FOUND);
+        throw new HttpException(
+          {
+            status: 'error',
+            message: error.message,
+          },
+          HttpStatus.NOT_FOUND,
+        );
       }
 
       // For other errors, return the generic error response
-      throw new HttpException({
-        status: 'error',
-        message: error.message,
-      }, HttpStatus.INTERNAL_SERVER_ERROR);
+      throw new HttpException(
+        {
+          status: 'error',
+          message: error.message,
+        },
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
     }
   }
 
@@ -244,10 +267,17 @@ export class UserService extends BaseService<User>{
     try {
       const { password, ...data } = updateUserDto;
 
-
       // Update user document
-      const updatedUser = await this.userModel.findOneAndUpdate({ _id: userId }, data, { new: true, runValidators: true });
-      const user = await super.findOneForSave(userId, ['settings', 'role', 'teams']);
+      const updatedUser = await this.userModel.findOneAndUpdate(
+        { _id: userId },
+        data,
+        { new: true, runValidators: true },
+      );
+      const user = await super.findOneForSave(userId, [
+        'settings',
+        'role',
+        'teams',
+      ]);
       const userSettings = user.settings;
       userSettings.emailPhoto = true;
       await userSettings.save();
@@ -259,22 +289,27 @@ export class UserService extends BaseService<User>{
     } catch (error) {
       // If NotFoundException is caught, return the error response with status 404
       if (error instanceof NotFoundException) {
-        throw new HttpException({
-          status: 'error',
-          message: error.message,
-        }, HttpStatus.NOT_FOUND);
+        throw new HttpException(
+          {
+            status: 'error',
+            message: error.message,
+          },
+          HttpStatus.NOT_FOUND,
+        );
       }
 
       // For other errors, return the generic error response
-      throw new HttpException({
-        status: 'error',
-        message: error.message,
-      }, HttpStatus.INTERNAL_SERVER_ERROR);
+      throw new HttpException(
+        {
+          status: 'error',
+          message: error.message,
+        },
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
     }
   }
 
   async forgotPassword(email: string): Promise<void> {
-
     const user = await this.userModel.findOne({ email });
     if (!user) {
       throw new NotFoundException('User not found');
@@ -285,26 +320,34 @@ export class UserService extends BaseService<User>{
 
     const token = this.generateResetToken(user);
     user.passwordResetToken = token;
-    user.passwordResetCode = hashedCode
+    user.passwordResetCode = hashedCode;
     user.passwordResetExpires = new Date(Date.now() + 600000); // 1 min
     await user.save();
     //console.log(user.firstName)
     const resetLink = `http://localhost:5173/newPassword?token=${token}`;
 
-    await this.emailService.sendPasswordReset(user, resetLink, randomCode)
+    await this.emailService.sendPasswordReset(user, resetLink, randomCode);
   }
 
   private generateResetToken(user): string {
     return `${Date.now()}${user._id}`;
   }
 
-  async resetPassword(token: string, newPassword: string, code: string): Promise<void> {
+  async resetPassword(
+    token: string,
+    newPassword: string,
+    code: string,
+  ): Promise<void> {
     const user = await this.userModel.findOne({ passwordResetToken: token });
-    if (!user || new Date() > user.passwordResetExpires || !(await this.compareCodes(code, user.passwordResetCode))) {
+    if (
+      !user ||
+      new Date() > user.passwordResetExpires ||
+      !(await this.compareCodes(code, user.passwordResetCode))
+    ) {
       throw new NotFoundException('Invalid or expired token');
     }
 
-    console.log(user.firstName)
+    console.log(user.firstName);
 
     const newHashedPassword = await bcrypt.hash(newPassword, 12);
 
@@ -328,16 +371,17 @@ export class UserService extends BaseService<User>{
     return hashedCode;
   };
   // Function to compare hashed code with user input
-  compareCodes = async (userInputCode: string, hashedCode: string): Promise<boolean> => {
+  compareCodes = async (
+    userInputCode: string,
+    hashedCode: string,
+  ): Promise<boolean> => {
     try {
       // Compare the user input (hashed) with the hashed code from the database
       return await bcrypt.compare(userInputCode, hashedCode);
-
     } catch (error) {
       // Handle error
       console.error('Error comparing codes:', error);
       return false; // Return false in case of error
     }
   };
-
 }

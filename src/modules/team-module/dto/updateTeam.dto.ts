@@ -1,15 +1,11 @@
-import { IsOptional, IsString } from "class-validator";
+import { IsOptional, IsString } from 'class-validator';
 
 export class UpdateTeamDto {
-    @IsOptional()
-    @IsString()
-    name?: string;
+  @IsOptional()
+  @IsString()
+  name?: string;
 
-  
-
-   @IsOptional()
+  @IsOptional()
   @IsString()
   description?: string;
-
- 
 }

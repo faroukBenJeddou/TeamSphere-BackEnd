@@ -1,10 +1,10 @@
-import { IsOptional, IsString } from "class-validator";
+import { IsOptional, IsString } from 'class-validator';
 
-export class updateProjectDto{
-    @IsOptional()
-    @IsString()
-    projectName?: string;
-    @IsOptional()
-    @IsString()
-    Description?: string;
+export class updateProjectDto {
+  @IsOptional()
+  @IsString()
+  projectName?: string;
+  @IsOptional()
+  @IsString()
+  Description?: string;
 }

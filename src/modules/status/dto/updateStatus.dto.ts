@@ -1,8 +1,8 @@
 import { IsEnum, IsNotEmpty } from 'class-validator';
-import { TaskStatus } from "../../../schemas/enums/task.status";
+import { TaskStatus } from '../../../schemas/enums/task.status';
 
 export class UpdateStatusDto {
-    @IsNotEmpty()
-    @IsEnum(TaskStatus)
-    status: TaskStatus;
+  @IsNotEmpty()
+  @IsEnum(TaskStatus)
+  status: TaskStatus;
 }

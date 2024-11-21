@@ -1,6 +1,6 @@
-import {User} from "../../../schemas/user.schema";
+import { User } from '../../../schemas/user.schema';
 
 export class SendChatMessageDto {
-    senderId: User;
-    content: string;
+  senderId: User;
+  content: string;
 }
